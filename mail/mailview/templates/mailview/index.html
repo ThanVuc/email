@@ -6,6 +6,9 @@ MailBox
 
 {% block body %}
 <div class="container">
+    
+    <div id="detailview" style="display: none;"></div>
+
     <div id="mailBox" style="display: none;"></div>
     
     <div id="compose">
@@ -44,3 +47,5 @@ MailBox
 {% block script %}
    <script src="{% static 'mailview/inbox.js' %}"></script>
 {% endblock %}
+
+

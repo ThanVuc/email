@@ -40,3 +40,32 @@
 .bg-color{
     background-color: rgb(217, 217, 217);
 }
+
+.mail-link{
+    font-size: 1.1vw;
+}
+
+.mail-detail{
+    font-size: 1.2vw;
+}
+
+@media screen and (max-width: 500px) {
+    .frame{
+        width: 17%;
+        font-weight: bold;
+    }
+}
+
+@media screen and (max-width: 420px) {
+    .frame{
+        width: 15%;
+        font-weight: bold;
+    }
+}
+
+@media screen and (min-width: 500px) {
+    .frame{
+        width: 14%;
+        font-weight: bold;
+    }
+}

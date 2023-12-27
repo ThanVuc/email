@@ -75,8 +75,9 @@ def mailbox(request,mail_box):
     emails= emails.order_by('-timestamp').all()
     return JsonResponse([email.serialize() for email in emails], safe=False)
 
-
-
-
 def mail_detail(request, mail_id):
-    pass
+    try:
+        email= Email.objects.get(id=mail_id, user= request.user)
+    except Email.DoesNotExist:
+        return JsonResponse({'message' : 'Id not exists!'}, status=400)
+    return JsonResponse(email.serialize(), status=200)

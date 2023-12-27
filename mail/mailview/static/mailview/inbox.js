@@ -1,18 +1,47 @@
+window.onpopstate = function (event) {
+    if (event.state) {
+        if (event.state.mailbox === 'compose') {
+            loadCompose();
+        } else if (event.state.mailbox === 'Inbox' || event.state.mailbox === 'Sent' || event.state.mailbox === 'Archived') {
+            loadMailBox(event.state.mailbox);
+        }
+
+        if (event.state.mailbox>='0' && event.state.mailbox<='9'){
+            getAndHandleAPI(parseInt(event.state.mailbox));
+        }
+    }
+}
+
+
+
 document.addEventListener('DOMContentLoaded', () => {
-    document.querySelector('#Inbox').onclick = () => loadMailBox('Inbox');
-    document.querySelector('#Sent').onclick = () => loadMailBox('Sent');
-    document.querySelector('#Archived').onclick = () => loadMailBox('Archived');
-    document.querySelector('#Compose').onclick = () => loadCompose();
+    document.querySelector('#Inbox').onclick = () => {
+        history.pushState({ mailbox: 'Inbox' }, "", `inbox`);
+        loadMailBox('Inbox');
+    }
+    document.querySelector('#Sent').onclick = () => {
+        history.pushState({ mailbox: 'Sent' }, "", `sent`);
+        loadMailBox('Sent');
+    }
+    document.querySelector('#Archived').onclick = () => {
+        history.pushState({ mailbox: 'Archived' }, "", `archived`);
+        loadMailBox('Archived');
+    }
+    document.querySelector('#Compose').onclick = () => {
+        history.pushState({ mailbox: 'compose' }, "", "compose");
+        loadCompose();
+    }
 
     document.querySelector('#compose-form').onsubmit = function () {
         postToEmail();
+        history.pushState({ mailbox: 'compose' }, "", "compose");
         loadMailBox('Sent');
         var today = new Date();
         var dd = String(today.getDate()).padStart(2, '0');
-        var mm = today.getMonth(); // Tháng bắt đầu từ 0
+        var mm = today.getMonth();
         var yyyy = today.getFullYear();
-        var hour= today.getHours();
-        var minute= today.getMinutes();
+        var hour = today.getHours();
+        var minute = today.getMinutes();
         var ampm = hour >= 12 ? 'PM' : 'AM';
         var monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "Septemper", "October", "November", "December"];
 
@@ -28,12 +57,31 @@ document.addEventListener('DOMContentLoaded', () => {
         return false;
     }
 
+
+
+
+    let observer = new MutationObserver(function () {
+        document.querySelectorAll('.mail-link').forEach(mail => {
+            mail.onclick = function () {
+                history.pushState({mailbox: `${mail.dataset.id}`},"",`${mail.dataset.id}`);
+                getAndHandleAPI(mail.dataset.id);
+            }
+        });
+    });
+
+    // Gọi callback trước khi gọi observer.observe
+
+    observer.observe(document.body, { childList: true, subtree: true });
+
     loadMailBox('Inbox');
+
 });
+
 
 function loadCompose() {
     document.querySelector('#mailBox').style.display = 'none';
     document.querySelector('#compose').style.display = 'block';
+    document.querySelector('#detailview').style.display = 'none';
 
     document.querySelector('#recipients').value = '';
     document.querySelector('#subject').value = '';
@@ -43,7 +91,9 @@ function loadCompose() {
 function loadMailBox(mailbox) {
     document.querySelector('#mailBox').style.display = 'block';
     document.querySelector('#compose').style.display = 'none';
+    document.querySelector('#detailview').style.display = 'none';
     document.querySelector('#mailBox').innerHTML = `<h3 class="mt-3 mb-3">${mailbox.charAt(0).toUpperCase() + mailbox.slice(1)}</h3>`;
+
     addEmailToBox(mailbox.toLowerCase());
 }
 
@@ -75,16 +125,46 @@ function addEmailToBox(mailbox) {
 }
 
 function addEmailToHTMLDiv(emails) {
-    var ParentElement = document.createElement('div');
-    ParentElement.className = 'mail-list';
     emails.forEach(email => {
         let element = document.createElement('div');
         let sender = email.sender, subject = email.subject, timestamp = email.timestamp, read = email.read;
-        element.innerHTML = `<div class="d-flex w-75"> <p class="w-25">${sender}</p> <p class="w-50">${subject}</p> </div> <p>${timestamp}</p>`;
-        element.className = 'd-flex justify-content-between border border-dark pt-2 ps-2 pe-2';
+        let id = email.id;
+        element.innerHTML = `<div class="d-flex w-75"> <p style="width: 10%; font-weight: bold; text-align: left;">${sender}</p> <p class="w-50">${subject}</p> </div> <p>${timestamp}</p>`;
+        element.className = 'mail-link d-flex justify-content-between border border-dark pt-2 ps-2 pe-2 btn btn-outline-dark';
         if (read) {
             element.classList.add('bg-color');
         }
+        element.dataset.id = `${id}`;
         document.querySelector('#mailBox').append(element);
     });
+}
+
+function getAndHandleAPI(id) {
+    url = `/emails/${id}`;
+    fetch(url)
+        .then(response => response.json())
+        .then(email => {
+            document.querySelector('#compose').style.display = 'none';
+            document.querySelector('#mailBox').style.display = 'none';
+            document.querySelector('#detailview').style.display = 'block';
+            document.querySelector('#detailview').innerHTML = `<h3 class="mt-3 mb-3">Email</h3>`;
+            let element = document.createElement('div');
+            let sender = email.sender, subject = email.subject,
+                timestamp = email.timestamp,
+                read = email.read,
+                recipients = email.recipients,
+                body = email.body;
+
+            element.innerHTML = `<div class="container border-top border-secondary pt-3">
+            <div class="d-flex w-100"><p class="frame">From: </p> <p>${sender}</p></div>
+            <div class="d-flex w-100"><p class="frame">To: <p>${recipients}</p></div>
+            <div class="d-flex w-100"><p class="frame">Subject: </p> <p>${subject}</p></div>
+            <div class="d-flex w-100"><p class="frame">Timestamp: </p> <p>${timestamp}</p></div>
+            <div><button class="btn btn-outline-primary">Reply</button>
+        </div>
+        <p class="container border-top border-secondary mt-3 pt-2">${body}</p>`;
+            element.className = 'mail-detail';
+
+            document.querySelector('#detailview').append(element);
+        })
 }
