@@ -7,6 +7,24 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelector('#compose-form').onsubmit = function () {
         postToEmail();
         loadMailBox('Sent');
+        var today = new Date();
+        var dd = String(today.getDate()).padStart(2, '0');
+        var mm = today.getMonth(); // Tháng bắt đầu từ 0
+        var yyyy = today.getFullYear();
+        var hour= today.getHours();
+        var minute= today.getMinutes();
+        var ampm = hour >= 12 ? 'PM' : 'AM';
+        var monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "Septemper", "October", "November", "December"];
+
+        today = monthNames[mm] + ' ' + dd + ' ' + yyyy + ', ' + hour + ':' + minute + ' ' + ampm;
+
+        let element = document.createElement('div');
+        let sender = document.querySelector('#sender').value,
+            subject = document.querySelector('#subject').value,
+            timestamp = today;
+        element.innerHTML = `<div class="d-flex w-75"> <p class="w-25">${sender}</p> <p class="w-50">${subject}</p> </div> <p>${timestamp}</p>`;
+        element.className = 'd-flex justify-content-between border border-dark pt-2 ps-2 pe-2';
+        document.querySelector('#mailBox').append(element);
         return false;
     }
 
@@ -29,13 +47,13 @@ function loadMailBox(mailbox) {
     addEmailToBox(mailbox.toLowerCase());
 }
 
-function postToEmail(){
-    let data= {
+function postToEmail() {
+    let data = {
         recipients: document.querySelector('#recipients').value,
         subject: document.querySelector('#subject').value,
         body: document.querySelector('#body').value
     }
-    let option= {
+    let option = {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -45,29 +63,28 @@ function postToEmail(){
     fetch('/emails', option)
 }
 
-function addEmailToBox(mailbox){
-    url= `/emails/${mailbox}`;
+function addEmailToBox(mailbox) {
+    url = `/emails/${mailbox}`;
     fetch(url)
-    .then(response => response.json())
-    .then(emails => {
-        console.log(emails);
-        addEmailToHTMLDiv(emails);
-    })
+        .then(response => response.json())
+        .then(emails => {
+            console.log(emails);
+            addEmailToHTMLDiv(emails);
+        })
 
 }
 
-function addEmailToHTMLDiv(emails){
-    var ParentElement= document.createElement('div');
-    ParentElement.className='mail-list';
+function addEmailToHTMLDiv(emails) {
+    var ParentElement = document.createElement('div');
+    ParentElement.className = 'mail-list';
     emails.forEach(email => {
-        let element= document.createElement('div');
-        let sender= email.sender, subject= email.subject, timestamp= email.timestamp, read= email.read;
-        element.innerHTML= `<div class="d-flex w-75"> <p class="w-25">${sender}</p> <p class="w-50">${subject}</p> </div> <p>${timestamp}</p>`;
-        element.className= 'd-flex justify-content-between border border-dark pt-2 ps-2 pe-2';
-        if (read){
+        let element = document.createElement('div');
+        let sender = email.sender, subject = email.subject, timestamp = email.timestamp, read = email.read;
+        element.innerHTML = `<div class="d-flex w-75"> <p class="w-25">${sender}</p> <p class="w-50">${subject}</p> </div> <p>${timestamp}</p>`;
+        element.className = 'd-flex justify-content-between border border-dark pt-2 ps-2 pe-2';
+        if (read) {
             element.classList.add('bg-color');
         }
         document.querySelector('#mailBox').append(element);
     });
-    
 }
