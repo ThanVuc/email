@@ -1,0 +1,46 @@
+{% extends 'mailview/layout.html' %}
+{% load static %}
+{% block title %}
+MailBox
+{% endblock %}
+
+{% block body %}
+<div class="container">
+    <div id="mailBox" style="display: none;"></div>
+    
+    <div id="compose">
+        <h1 class="mt-1 text-success">Compose: </h1>
+        <form id="compose-form">
+            <div class="input-group mb-3 row">
+                <span class="input-group-text col-sm-2">Sender: </span>
+                <input class="form-control" readonly type="text" name="" id="sender" value="{{request.user.email}}">
+            </div>
+
+            <div class="input-group mb-3 row">
+                <span class="input-group-text col-sm-2">Recipients: </span>
+                <input type="text" class="form-control " name="" id="recipients" placeholder="Enter recipients List">
+            </div>
+
+            <div class="input-group mb-3 row">
+                <span class="input-group-text col-sm-2">Subject: </span>
+                <input type="text" class="form-control" name="" id="subject" placeholder="Enter subject">
+            </div>
+
+            <div class="mb-3 row">
+                <span class="input-group-text col-sm-2">Body: </span>
+                <textarea name="" class="form-control mt-3 col-12" id="body" cols="30" rows="6"></textarea>
+            </div>
+
+            <div class="d-flex justify-content-end">
+                <input type="submit" class="btn btn-outline-primary" value="Sent">
+            </div>
+        </form>
+    </div>
+</div>
+</div>
+{% endblock %}
+
+
+{% block script %}
+   <script src="{% static 'mailview/inbox.js' %}"></script>
+{% endblock %}
