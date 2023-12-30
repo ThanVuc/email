@@ -8,7 +8,10 @@ urlpatterns= [
     path('compose', views.index, name='index'),
     path('sent', views.index, name='index'),
     path('archived', views.index, name='index'),
-
+    path('inbox/<int:mail_id>', views.detail, name='detail'),
+    path('compose/<int:mail_id>', views.detail, name='detail'),
+    path('sent/<int:mail_id>', views.detail, name='detail'),
+    path('archived/<int:mail_id>', views.detail, name='detail'),
 
 
     #API Routes

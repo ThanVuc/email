@@ -6,11 +6,15 @@ MailBox
 
 {% block body %}
 <div class="container">
-    
+    {% if isURL %}
+    <script>
+        detail_getAndHandleAPI("{{id}}");
+    </script>
+    {% endif %}
     <div id="detailview" style="display: none;"></div>
 
     <div id="mailBox" style="display: none;"></div>
-    
+
     <div id="compose">
         <h1 class="mt-1 text-success">Compose: </h1>
         <form id="compose-form">
@@ -40,12 +44,16 @@ MailBox
         </form>
     </div>
 </div>
+
+{% if not isURL %}
+<script>
+    loadMailBox('Inbox');
+</script>
+{% endif %}
 </div>
 {% endblock %}
 
 
 {% block script %}
-   <script src="{% static 'mailview/inbox.js' %}"></script>
+<script src="{% static 'mailview/inbox.js' %}"></script>
 {% endblock %}
-
-

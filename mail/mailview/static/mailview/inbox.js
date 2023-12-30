@@ -6,25 +6,24 @@ window.onpopstate = function (event) {
             loadMailBox(event.state.mailbox);
         }
 
-        if (event.state.mailbox>='0' && event.state.mailbox<='9'){
+        if (event.state.mailbox >= '0' && event.state.mailbox <= '9') {
             getAndHandleAPI(parseInt(event.state.mailbox));
         }
     }
 }
 
-
-
+var hasrun= true;
 document.addEventListener('DOMContentLoaded', () => {
     document.querySelector('#Inbox').onclick = () => {
-        history.pushState({ mailbox: 'Inbox' }, "", `inbox`);
+        history.pushState({ mailbox: 'Inbox' }, "", "inbox");
         loadMailBox('Inbox');
     }
     document.querySelector('#Sent').onclick = () => {
-        history.pushState({ mailbox: 'Sent' }, "", `sent`);
+        history.pushState({ mailbox: 'Sent' }, "", "sent");
         loadMailBox('Sent');
     }
     document.querySelector('#Archived').onclick = () => {
-        history.pushState({ mailbox: 'Archived' }, "", `archived`);
+        history.pushState({ mailbox: 'Archived' }, "", "archived");
         loadMailBox('Archived');
     }
     document.querySelector('#Compose').onclick = () => {
@@ -34,7 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.querySelector('#compose-form').onsubmit = function () {
         postToEmail();
-        history.pushState({ mailbox: 'compose' }, "", "compose");
+        history.pushState({ mailbox: 'Sent' }, "", "sent");
         loadMailBox('Sent');
         var today = new Date();
         var dd = String(today.getDate()).padStart(2, '0');
@@ -63,18 +62,13 @@ document.addEventListener('DOMContentLoaded', () => {
     let observer = new MutationObserver(function () {
         document.querySelectorAll('.mail-link').forEach(mail => {
             mail.onclick = function () {
-                history.pushState({mailbox: `${mail.dataset.id}`},"",`${mail.dataset.id}`);
-                getAndHandleAPI(mail.dataset.id);
+                detail_showDetail(mail.dataset.mailbox, mail.dataset.id);
             }
         });
     });
 
-    // Gọi callback trước khi gọi observer.observe
 
     observer.observe(document.body, { childList: true, subtree: true });
-
-    loadMailBox('Inbox');
-
 });
 
 
@@ -89,12 +83,20 @@ function loadCompose() {
 }
 
 function loadMailBox(mailbox) {
+
+    if (hasrun){
+        if (mailbox == "Inbox") {
+            history.pushState({ mailbox: 'Inbox' }, "", `inbox`);
+        }
+        hasrun= false;
+    }
+
     document.querySelector('#mailBox').style.display = 'block';
     document.querySelector('#compose').style.display = 'none';
     document.querySelector('#detailview').style.display = 'none';
     document.querySelector('#mailBox').innerHTML = `<h3 class="mt-3 mb-3">${mailbox.charAt(0).toUpperCase() + mailbox.slice(1)}</h3>`;
 
-    addEmailToBox(mailbox.toLowerCase());
+    mailBox_addEmailToBox(mailbox.toLowerCase());
 }
 
 function postToEmail() {
@@ -113,18 +115,17 @@ function postToEmail() {
     fetch('/emails', option)
 }
 
-function addEmailToBox(mailbox) {
+function mailBox_addEmailToBox(mailbox) {
     url = `/emails/${mailbox}`;
     fetch(url)
         .then(response => response.json())
         .then(emails => {
-            console.log(emails);
-            addEmailToHTMLDiv(emails);
+            mailBox_addEmailToHTMLDiv(emails,mailbox);
         })
 
 }
 
-function addEmailToHTMLDiv(emails) {
+function mailBox_addEmailToHTMLDiv(emails, mailbox) {
     emails.forEach(email => {
         let element = document.createElement('div');
         let sender = email.sender, subject = email.subject, timestamp = email.timestamp, read = email.read;
@@ -134,12 +135,18 @@ function addEmailToHTMLDiv(emails) {
         if (read) {
             element.classList.add('bg-color');
         }
-        element.dataset.id = `${id}`;
+        element.dataset.id= id;
+        element.dataset.mailbox= mailbox;
         document.querySelector('#mailBox').append(element);
     });
 }
 
-function getAndHandleAPI(id) {
+function detail_showDetail(mailbox, id){
+    history.pushState({ mailbox: `${id}` }, "", `${mailbox}%2F${id}`);
+    detail_getAndHandleAPI(id);
+}
+
+function detail_getAndHandleAPI(id) {
     url = `/emails/${id}`;
     fetch(url)
         .then(response => response.json())
@@ -164,7 +171,6 @@ function getAndHandleAPI(id) {
         </div>
         <p class="container border-top border-secondary mt-3 pt-2">${body}</p>`;
             element.className = 'mail-detail';
-
             document.querySelector('#detailview').append(element);
         })
 }

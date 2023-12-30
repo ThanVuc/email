@@ -81,3 +81,9 @@ def mail_detail(request, mail_id):
     except Email.DoesNotExist:
         return JsonResponse({'message' : 'Id not exists!'}, status=400)
     return JsonResponse(email.serialize(), status=200)
+
+def detail(request, mail_id):
+    return render(request, 'mailview/index.html', {
+        "isURL": True,
+        "id": mail_id
+    })
