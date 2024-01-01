@@ -6,6 +6,7 @@ import json
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 from .models import Email, User
+import time
 
 # Create your views here.
 def index(request):
@@ -51,6 +52,7 @@ def compose(request):
         email.save()
     return JsonResponse({'message' : 'Successful to Post'}, status=201)
 
+@login_required
 def mailbox(request,mail_box):
     if mail_box=='inbox':
         emails= Email.objects.filter(
@@ -75,15 +77,35 @@ def mailbox(request,mail_box):
     emails= emails.order_by('-timestamp').all()
     return JsonResponse([email.serialize() for email in emails], safe=False)
 
+@login_required
+@csrf_exempt
 def mail_detail(request, mail_id):
     try:
         email= Email.objects.get(id=mail_id, user= request.user)
     except Email.DoesNotExist:
         return JsonResponse({'message' : 'Id not exists!'}, status=400)
+    
+    
+    if request.method=="PUT":
+        data= json.loads(request.body)
+        if data.get('read'):
+            email.read= data.get('read')
+        if data.get('archived','')!='':
+            email.archived= data.get('archived')
+        email.save()
+    
     return JsonResponse(email.serialize(), status=200)
 
+
+@login_required
 def detail(request, mail_id):
     return render(request, 'mailview/index.html', {
         "isURL": True,
         "id": mail_id
+    })
+
+def locateMailBox(request, mail_box):
+    return render(request, 'mailview/index.html', {
+        "isURL": True,
+        "box": mail_box
     })

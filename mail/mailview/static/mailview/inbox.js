@@ -12,48 +12,30 @@ window.onpopstate = function (event) {
     }
 }
 
-var hasrun= true;
+var hasrun = true;
 document.addEventListener('DOMContentLoaded', () => {
+    document.querySelector('#oldmail-block').style.display = 'none';
     document.querySelector('#Inbox').onclick = () => {
-        history.pushState({ mailbox: 'Inbox' }, "", "inbox");
+        history.pushState({ mailbox: 'nbox' }, "", "inbox");
         loadMailBox('Inbox');
     }
     document.querySelector('#Sent').onclick = () => {
-        history.pushState({ mailbox: 'Sent' }, "", "sent");
+        history.pushState({ mailbox: 'sent' }, "", "sent");
         loadMailBox('Sent');
     }
     document.querySelector('#Archived').onclick = () => {
         history.pushState({ mailbox: 'Archived' }, "", "archived");
         loadMailBox('Archived');
     }
-    document.querySelector('#Compose').onclick = () => {
+    document.querySelector('#compose').onclick = () => {
         history.pushState({ mailbox: 'compose' }, "", "compose");
         loadCompose();
     }
 
-    document.querySelector('#compose-form').onsubmit = function () {
+    document.querySelector('#submit-compose').onclick = function () {
         postToEmail();
-        history.pushState({ mailbox: 'Sent' }, "", "sent");
-        loadMailBox('Sent');
-        var today = new Date();
-        var dd = String(today.getDate()).padStart(2, '0');
-        var mm = today.getMonth();
-        var yyyy = today.getFullYear();
-        var hour = today.getHours();
-        var minute = today.getMinutes();
-        var ampm = hour >= 12 ? 'PM' : 'AM';
-        var monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "Septemper", "October", "November", "December"];
-
-        today = monthNames[mm] + ' ' + dd + ' ' + yyyy + ', ' + hour + ':' + minute + ' ' + ampm;
-
-        let element = document.createElement('div');
-        let sender = document.querySelector('#sender').value,
-            subject = document.querySelector('#subject').value,
-            timestamp = today;
-        element.innerHTML = `<div class="d-flex w-75"> <p class="w-25">${sender}</p> <p class="w-50">${subject}</p> </div> <p>${timestamp}</p>`;
-        element.className = 'd-flex justify-content-between border border-dark pt-2 ps-2 pe-2';
-        document.querySelector('#mailBox').append(element);
-        return false;
+        history.pushState({ mailbox: 'sent' }, "", "sent");
+        setTimeout(() => loadMailBox('sent'), 300);
     }
 
 
@@ -66,8 +48,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     });
-
-
     observer.observe(document.body, { childList: true, subtree: true });
 });
 
@@ -80,15 +60,17 @@ function loadCompose() {
     document.querySelector('#recipients').value = '';
     document.querySelector('#subject').value = '';
     document.querySelector('#body').value = '';
+    document.querySelector('#bt-oldmail').style.display = 'none';
+    document.querySelector('#oldmail-block').style.display = 'none';
 }
 
 function loadMailBox(mailbox) {
 
-    if (hasrun){
+    if (hasrun) {
         if (mailbox == "Inbox") {
             history.pushState({ mailbox: 'Inbox' }, "", `inbox`);
         }
-        hasrun= false;
+        hasrun = false;
     }
 
     document.querySelector('#mailBox').style.display = 'block';
@@ -120,7 +102,7 @@ function mailBox_addEmailToBox(mailbox) {
     fetch(url)
         .then(response => response.json())
         .then(emails => {
-            mailBox_addEmailToHTMLDiv(emails,mailbox);
+            mailBox_addEmailToHTMLDiv(emails, mailbox);
         })
 
 }
@@ -135,42 +117,119 @@ function mailBox_addEmailToHTMLDiv(emails, mailbox) {
         if (read) {
             element.classList.add('bg-color');
         }
-        element.dataset.id= id;
-        element.dataset.mailbox= mailbox;
+        element.dataset.id = id;
+        element.dataset.mailbox = mailbox;
         document.querySelector('#mailBox').append(element);
     });
 }
 
-function detail_showDetail(mailbox, id){
+function detail_showDetail(mailbox, id) {
     history.pushState({ mailbox: `${id}` }, "", `${mailbox}%2F${id}`);
-    detail_getAndHandleAPI(id);
+    detail_getAndHandleAPI(id, mailbox);
 }
 
-function detail_getAndHandleAPI(id) {
+function detail_getAndHandleAPI(id, mailbox) {
     url = `/emails/${id}`;
+
     fetch(url)
         .then(response => response.json())
         .then(email => {
             document.querySelector('#compose').style.display = 'none';
             document.querySelector('#mailBox').style.display = 'none';
             document.querySelector('#detailview').style.display = 'block';
-            document.querySelector('#detailview').innerHTML = `<h3 class="mt-3 mb-3">Email</h3>`;
+            const archived = email.archived;
+            if (mailbox != 'sent') {
+                if (!archived) {
+                    document.querySelector('#detailview').innerHTML = `<div class="d-flex justify-content-between mt-3 mb-3"> 
+            <h3>Email</h3> 
+            <button id="archived" class="btn btn-outline-success ms-auto" data-id="${id} data-archived="${archived}">Arichived</button>`;
+
+                } else {
+                    document.querySelector('#detailview').innerHTML = `<div class="d-flex justify-content-between mt-3 mb-3"> 
+            <h3>Email</h3> 
+            <button id="archived" class="btn btn-outline-danger ms-auto" data-id="${id} data-archived="${archived}"">Unarchived</button>`;
+                }
+
+                document.querySelector('#archived').onclick = () => {
+                    const archived = email.archived;
+                    const archived_status = {
+                        archived: !archived
+                    }
+                    const archived_option = {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(archived_status)
+                    }
+                    fetch(url, archived_option)
+                    history.pushState({ mailbox: 'Inbox' }, "", "inbox");
+                    
+                    setTimeout(() => loadMailBox('Inbox'), 300);
+                }
+
+            } else {
+                document.querySelector('#detailview').innerHTML = `<h3 class="mt-3 mb-3">Email</h3>`;
+            }
+
             let element = document.createElement('div');
-            let sender = email.sender, subject = email.subject,
+            const sender = email.sender, subject = email.subject,
                 timestamp = email.timestamp,
-                read = email.read,
                 recipients = email.recipients,
                 body = email.body;
-
+            console.log(email);
             element.innerHTML = `<div class="container border-top border-secondary pt-3">
             <div class="d-flex w-100"><p class="frame">From: </p> <p>${sender}</p></div>
             <div class="d-flex w-100"><p class="frame">To: <p>${recipients}</p></div>
             <div class="d-flex w-100"><p class="frame">Subject: </p> <p>${subject}</p></div>
             <div class="d-flex w-100"><p class="frame">Timestamp: </p> <p>${timestamp}</p></div>
-            <div><button class="btn btn-outline-primary">Reply</button>
+            <div><button id="reply" class="btn btn-outline-primary">Reply</button>
         </div>
         <p class="container border-top border-secondary mt-3 pt-2">${body}</p>`;
             element.className = 'mail-detail';
             document.querySelector('#detailview').append(element);
+
+            document.querySelector('#reply').onclick = () => {
+                history.pushState({ mailbox: 'compose' }, "", "compose");
+                loadCompose();
+                reply_handle(sender, subject, body, timestamp);
+            }
         })
+
+    change_read_status(url);
+}
+
+function change_read_status(url) {
+    const read_status = {
+        read: true
+    }
+    const read_option = {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(read_status)
+    }
+    fetch(url, read_option)
+}
+
+function reply_handle(sender, subject, body, timestamp) {
+    let bt = document.querySelector('#bt-oldmail');
+    let oldmail = document.querySelector('#oldmail');
+    document.querySelector('#recipients').value = sender;
+
+    if (!subject.startsWith('Re: '))
+        document.querySelector('#subject').value = `Re: ${subject}`;
+    else
+        document.querySelector('#subject').value = `${subject}`;
+
+    oldmail.value = `On ${timestamp} ${sender} wrote: \n ${body}`;
+    bt.style.display = 'block';
+    bt.onclick = () => {
+        var displayOldMail = document.querySelector('#oldmail-block');
+        if (displayOldMail.style.display === 'none')
+            displayOldMail.style.display = 'block';
+        else
+            displayOldMail.style.display = 'none';
+    }
 }

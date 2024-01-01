@@ -4,10 +4,10 @@ from . import views
 app_name= "mailview"
 urlpatterns= [
     path('', views.index, name='index'),
-    path('inbox', views.index, name='index'),
-    path('compose', views.index, name='index'),
-    path('sent', views.index, name='index'),
-    path('archived', views.index, name='index'),
+    path('<str:mail_box>', views.locateMailBox, name='locateMailBox'),
+    path('<str:mail_box>', views.locateMailBox, name='locateMailBox'),
+    path('<str:mail_box>', views.locateMailBox, name='locateMailBox'),
+    path('<str:mail_box>', views.locateMailBox, name='locateMailBox'),
     path('inbox/<int:mail_id>', views.detail, name='detail'),
     path('compose/<int:mail_id>', views.detail, name='detail'),
     path('sent/<int:mail_id>', views.detail, name='detail'),

@@ -7,9 +7,15 @@ MailBox
 {% block body %}
 <div class="container">
     {% if isURL %}
+    {% if id %}
     <script>
         detail_getAndHandleAPI("{{id}}");
     </script>
+    {% else %}
+    <script>
+        document.addEventListener('DOMContentLoaded', () => loadMailBox("{{box}}"));
+    </script>
+    {% endif %}
     {% endif %}
     <div id="detailview" style="display: none;"></div>
 
@@ -17,7 +23,7 @@ MailBox
 
     <div id="compose">
         <h1 class="mt-1 text-success">Compose: </h1>
-        <form id="compose-form">
+        <div id="compose-form">
             <div class="input-group mb-3 row">
                 <span class="input-group-text col-sm-2">Sender: </span>
                 <input class="form-control" readonly type="text" name="" id="sender" value="{{request.user.email}}">
@@ -38,10 +44,18 @@ MailBox
                 <textarea name="" class="form-control mt-3 col-12" id="body" cols="30" rows="6"></textarea>
             </div>
 
-            <div class="d-flex justify-content-end">
-                <input type="submit" class="btn btn-outline-primary" value="Sent">
+            <button id="bt-oldmail" class="btn mb-2" style="display: none;">...</button>
+
+            <div class="mb-3 row" style="display: none;" id="oldmail-block">
+                <span class="input-group-text col-sm-2">Old Mail: </span>
+                <textarea name="" class="form-control mt-3 col-12" id="oldmail" cols="30" rows="6"></textarea>
             </div>
-        </form>
+
+            <div class="d-flex justify-content-end mb-3">
+                <input id="submit-compose" type="submit" class="btn btn-outline-primary" value="Sent">
+            </div>
+
+        </div>
     </div>
 </div>
 
